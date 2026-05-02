@@ -61,7 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 1
+        self.lvl = 3
     def draw(self):
         self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
         self.rect.center = self.pos
@@ -198,6 +198,13 @@ def level(lvl):
         Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -840), (50, 50), 50, (255, 255, 255), 0,lvl)
         Ground(V(SCREEN_WIDTH // 2 - 500, -50), (1500, 100), (60, 175, 50), lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 750, SCREEN_HEIGHT - 550), (200, 100), (0, 0, 150),lvl)
+    elif lvl == 3:
+        Ground(V(100, SCREEN_HEIGHT), (200, 100), (60, 175, 50), lvl) #1
+        Ground(V(410, SCREEN_HEIGHT - 100), (100, 330), (60, 175, 50), lvl) #1
+        Ground(V(680, SCREEN_HEIGHT-100), (100, 500), (60, 175, 50), lvl) #1
+        Ground(V(900, SCREEN_HEIGHT-100), (70, 600), (60, 175, 50), lvl) #1
+        Obstacle(V(875, SCREEN_HEIGHT - 395.4), (10, 10), 10, (60, 175, 50), 0,lvl)
+
     else:
         pass
 
