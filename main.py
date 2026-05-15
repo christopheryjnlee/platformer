@@ -25,7 +25,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.size = size
         self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
         self.color = color
-        self.level = level
+        self.lvl = level
         self.swidth = swidth
         self.dir = dir
     def draw(self): 
@@ -47,7 +47,7 @@ class Obstacle(pygame.sprite.Sprite):
         pygame.draw.polygon(screen, self.color, points)
     def update(self):
         #self.pos.y  += 0.5
-        if self.level == player.lvl:
+        if self.lvl == player.lvl:
             self.draw()
 
 class Player(pygame.sprite.Sprite):
@@ -61,7 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 3
+        self.lvl = 1
     def draw(self):
         self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
         self.rect.center = self.pos
@@ -83,6 +83,9 @@ class Player(pygame.sprite.Sprite):
                 for ground in Grounds:
                     if ground.lvl == self.lvl - 1:
                         ground.kill()
+                for obstacle in Obstacles:
+                    if obstacle.lvl == self.lvl - 1:
+                        obstacle.kill()
         if self.pos.x < 0 or self.pos.x > SCREEN_WIDTH or self.pos.y > SCREEN_HEIGHT:
             self.respawn()
         for obstacle in Obstacles:
@@ -203,13 +206,11 @@ def level(lvl):
         Ground(V(410, SCREEN_HEIGHT - 100), (100, 330), (60, 175, 50), lvl) #1
         Ground(V(680, SCREEN_HEIGHT-100), (100, 500), (60, 175, 50), lvl) #1
         Ground(V(900, SCREEN_HEIGHT-100), (70, 600), (60, 175, 50), lvl) #1
-        Obstacle(V(875, SCREEN_HEIGHT - 395.4), (10, 10), 10, (60, 175, 50), 0,lvl)
-
+        Obstacle(V(875, SCREEN_HEIGHT - 395.6), (10, 10), 10, (60, 175, 50), 1,lvl)
     else:
         pass
 
 game_running = True
-
 
 level(player.lvl)
 player.respawn()
