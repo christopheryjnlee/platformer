@@ -215,10 +215,9 @@ def level(lvl):
         Ground(V(1335, SCREEN_HEIGHT+265), (50, 600), (128, 116, 108), lvl)
         Ground(V(1335, SCREEN_HEIGHT+285), (50, 585), (99, 91, 85), lvl)
         Obstacle(V(875, SCREEN_HEIGHT - 395.6), (10, 10), 10, (60, 175, 50), 1,lvl)
+        Ground(V(1500, SCREEN_HEIGHT - 20), (50, 400),(60, 175, 50), lvl )
+        Ground(V(1500, SCREEN_HEIGHT), (50, 385), (100, 65, 25), lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 550, SCREEN_HEIGHT - 750), (200, 100), (80, 50, 35),lvl)
-
-
-
     else:
         pass
 
