@@ -61,7 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 3
+        self.lvl = 2
     def draw(self):
         self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
         self.rect.center = self.pos
@@ -86,6 +86,12 @@ class Player(pygame.sprite.Sprite):
                 for obstacle in Obstacles:
                     if obstacle.lvl == self.lvl - 1:
                         obstacle.kill()
+                for tramp in Trampolines:
+                    if tramp.lvl == self.lvl - 1:
+                        tramp.kill()
+                for tele in Teleporters:
+                    if tele.lvl == self.lvl - 1:
+                        tele.kill()
         if self.pos.x < 0 or self.pos.x > SCREEN_WIDTH or self.pos.y > SCREEN_HEIGHT:
             self.respawn()
         for obstacle in Obstacles:
@@ -115,6 +121,16 @@ class Player(pygame.sprite.Sprite):
     def collideY(self,dt):
         self.onGround = False
         self.jgrace -= dt
+        for ground in Trampolines:
+            if self.rect.colliderect(ground.rect):
+                if self.vel.y > 0:
+                    self.rect.bottom = ground.rect.top
+                    self.onGround = True
+                    self.jgrace = self.gracetime
+                elif self.vel.y < 0:
+                    self.rect.top = ground.rect.bottom
+                self.vel.y = -self.jump * ground.bounce
+                self.pos.y = self.rect.centery
         for ground in Grounds:
             if self.rect.colliderect(ground.rect):
                 if self.vel.y > 0:
@@ -150,6 +166,23 @@ class Ground(pygame.sprite.Sprite):
     def update(self):
         if self.lvl == player.lvl:
             self.draw()
+
+class Trampoline(pygame.sprite.Sprite):
+    def __init__(self, pos, size, color, bounce, lvl):
+        super().__init__(Trampolines)
+        self.pos = pos
+        self.size = size
+        self.bounce = bounce
+        self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
+        self.color = color
+        self.lvl = lvl
+    def draw(self): 
+        self.rect.center = self.pos
+        pygame.draw.ellipse(screen, self.color, self.rect)
+    def update(self):
+        if self.lvl == player.lvl:
+            self.draw()
+
 class Teleporter(pygame.sprite.Sprite):
     def __init__(self, pos, size, color,level):
         super().__init__(Teleporters)
@@ -157,12 +190,12 @@ class Teleporter(pygame.sprite.Sprite):
         self.size = size
         self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
         self.color = color
-        self.level = level
+        self.lvl = level
     def draw(self): 
         self.rect.center = self.pos
         pygame.draw.rect(screen, self.color, self.rect)
     def update(self):
-        if self.level == player.lvl:
+        if self.lvl == player.lvl:
             self.draw()
         
 U = pygame.K_w
@@ -175,27 +208,40 @@ player = Player()
 Grounds = pygame.sprite.Group()
 Teleporters = pygame.sprite.Group()
 Obstacles = pygame.sprite.Group()
+Trampolines = pygame.sprite.Group()
+brown = (100, 65, 25)
 
 def level(lvl):
     if lvl == 1:
         Ground(V(100, SCREEN_HEIGHT), (200, 100), (60, 175, 50), lvl)
+        Ground(V(100, SCREEN_HEIGHT + 20), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 300, SCREEN_HEIGHT - 200), (200, 100), (60, 175, 50), lvl)
+        Ground(V(SCREEN_WIDTH // 2 - 300, SCREEN_HEIGHT - 180), (200, 85), brown, lvl)
         Ground(V(100, SCREEN_HEIGHT - 350), (200, 100), (60, 175, 50), lvl)
+        Ground(V(100, SCREEN_HEIGHT - 330), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT - 500), (200, 100), (60, 175, 50), lvl)
-        Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 900), (1800, 400), (60, 175, 50), lvl)
+        Ground(V(SCREEN_WIDTH // 2 - 300, SCREEN_HEIGHT - 480), (200, 85), brown, lvl)
+        Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 900), (1800, 400), (99, 94, 90), lvl)
         Ground(V(SCREEN_WIDTH // 2 + 140, SCREEN_HEIGHT+200), (200, 1500), (60, 175, 50), lvl)
+        Ground(V(SCREEN_WIDTH // 2 +140, SCREEN_HEIGHT +220), (200, 1485), brown, lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 600, SCREEN_HEIGHT - 300), (200, 100), (80, 50, 35), lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -525.54), (25, 50), 25, (60, 175, 50), 1,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT - 539), (25, 25), 25, (60, 175, 50), 1,lvl)
     elif lvl == 2:
         Ground(V(100, SCREEN_HEIGHT), (200, 100), (60, 175, 50), lvl) #1
+        Ground(V(100, SCREEN_HEIGHT +20), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 100), (300, 100), (60, 175, 50), lvl)#2
+        Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 80), (300, 85), brown, lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -175), (100, 50), 50, (255, 255, 255), 1,lvl)
         Ground(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT - 200), (200, 100), (60, 175, 50), lvl)#3
+        Ground(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT - 180), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 400), (450, 100), (60, 175, 50), lvl)#4
+        Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 380), (450, 85), brown, lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -100, SCREEN_HEIGHT -475), (100, 50), 50, (255, 255, 255), 1,lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -475), (100, 50), 50, (255, 255, 255), 1,lvl)
         Ground(V(SCREEN_WIDTH // 2 - 720, SCREEN_HEIGHT - 530), (120, 100), (60, 175, 50), lvl)#5
+        Ground(V(SCREEN_WIDTH // 2 - 720, SCREEN_HEIGHT - 510), (120, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 650), (700, 100), (60, 175, 50), lvl)#6
+        Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 630), (700, 85), brown, lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -725), (50, 50), 50, (255, 255, 255), 1,lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -100, SCREEN_HEIGHT -840), (50, 50), 50, (255, 255, 255), 0,lvl)
         Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -840), (50, 50), 50, (255, 255, 255), 0,lvl)
@@ -217,6 +263,7 @@ def level(lvl):
         Obstacle(V(875, SCREEN_HEIGHT - 395.6), (10, 10), 10, (60, 175, 50), 1,lvl)
         Ground(V(1500, SCREEN_HEIGHT - 20), (50, 400),(60, 175, 50), lvl )
         Ground(V(1500, SCREEN_HEIGHT), (50, 385), (100, 65, 25), lvl)
+        Trampoline(V(1500, SCREEN_HEIGHT - 215), (50, 15), (175, 120, 190), 1.7, lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 550, SCREEN_HEIGHT - 750), (200, 100), (80, 50, 35),lvl)
     else:
         pass
@@ -237,6 +284,7 @@ while game_running:
     Grounds.update()
     Teleporters.update()
     Obstacles.update()
+    Trampolines.update()
     player.update(deltatime)
     if K[Q]:
         game_running = False
