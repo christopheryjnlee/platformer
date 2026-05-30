@@ -1,4 +1,4 @@
-import pygame
+import pygame, os
 """
 i want to make a platformer
 
@@ -15,6 +15,16 @@ clock = pygame.time.Clock()
 infoObj = pygame.display.Info()
 SCREEN_WIDTH = infoObj.current_w
 SCREEN_HEIGHT = infoObj.current_h
+
+def getImages(path):
+    images = []
+    for file in os.listdir(path):
+        image = pygame.image.load(path + "/" + file)
+        images.append(image)
+    return images
+
+cannonImgs = getImages("cannon")
+fireballImgs = getImages("fireball")
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
@@ -61,7 +71,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 2
+        self.lvl = 4
     def draw(self):
         self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
         self.rect.center = self.pos
@@ -167,6 +177,33 @@ class Ground(pygame.sprite.Sprite):
         if self.lvl == player.lvl:
             self.draw()
 
+class Cannon(pygame.sprite.Sprite):
+    def __init__(self, pos, size, rate, lvl):
+        super().__init__(Cannons)
+        self.pos = pos
+        self.size = size
+        self.rate = rate
+        self.frame = 0
+        self.lastTick = 0
+        self.images = cannonImgs.copy()
+        for i in range(len(self.images)):
+            self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        self.lvl = lvl
+    def draw(self):
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        screen.blit(self.image, self.rect)
+    def update(self):
+        if pygame.time.get_ticks() - self.lastTick > self.rate:
+            self.lastTick = pygame.time.get_ticks()
+            self.frame += 1 
+            if self.frame == len(self.images): self.frame = 0
+            print("hi", self.frame)
+        if self.lvl == player.lvl:
+            self.draw()
+
 class Trampoline(pygame.sprite.Sprite):
     def __init__(self, pos, size, color, bounce, lvl):
         super().__init__(Trampolines)
@@ -209,6 +246,7 @@ Grounds = pygame.sprite.Group()
 Teleporters = pygame.sprite.Group()
 Obstacles = pygame.sprite.Group()
 Trampolines = pygame.sprite.Group()
+Cannons = pygame.sprite.Group()
 brown = (100, 65, 25)
 
 def level(lvl):
@@ -265,6 +303,10 @@ def level(lvl):
         Ground(V(1500, SCREEN_HEIGHT), (50, 385), (100, 65, 25), lvl)
         Trampoline(V(1500, SCREEN_HEIGHT - 215), (50, 15), (175, 120, 190), 1.7, lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 550, SCREEN_HEIGHT - 750), (200, 100), (80, 50, 35),lvl)
+    elif lvl == 4:
+        Ground(V(100, SCREEN_HEIGHT ), (200, 90), (60, 175, 50), lvl) #1
+        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), (100, 65, 25), lvl) #1
+        Cannon(V(500, SCREEN_HEIGHT - 200), 0.3, 100,  lvl)
     else:
         pass
 
@@ -285,6 +327,7 @@ while game_running:
     Teleporters.update()
     Obstacles.update()
     Trampolines.update()
+    Cannons.update()
     player.update(deltatime)
     if K[Q]:
         game_running = False
