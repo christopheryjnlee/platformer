@@ -24,7 +24,7 @@ def getImages(path):
     return images
 
 cannonImgs = getImages("cannon")
-fireballImgs = getImages("fireball")
+fireballImgs = getImages("ball")
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
@@ -178,16 +178,18 @@ class Ground(pygame.sprite.Sprite):
             self.draw()
 
 class Cannon(pygame.sprite.Sprite):
-    def __init__(self, pos, size, rate, lvl):
+    def __init__(self, pos, size, rate, lvl, isFlipped = False):
         super().__init__(Cannons)
         self.pos = pos
         self.size = size
         self.rate = rate
         self.frame = 0
         self.lastTick = 0
+        self.flip = isFlipped
         self.images = cannonImgs.copy()
         for i in range(len(self.images)):
             self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+            self.images[i] = pygame.transform.flip(self.images[i], self.flip, False)
         self.image = self.images[self.frame]
         self.rect = self.image.get_rect(center = self.pos)
         self.lvl = lvl
@@ -199,8 +201,38 @@ class Cannon(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.lastTick > self.rate:
             self.lastTick = pygame.time.get_ticks()
             self.frame += 1 
+            if self.frame == len(self.images):
+                self.frame = 0
+                Fireball(V(self.pos.x - 50, self.pos.y), 0.4, 100, self.lvl)
+        if self.lvl == player.lvl:
+            self.draw()
+
+class Fireball(pygame.sprite.Sprite):
+    def __init__(self, pos, size, rate, lvl, isFlipped = False):
+        super().__init__(Fireballs)
+        self.pos = pos
+        self.size = size
+        self.rate = rate
+        self.frame = 0
+        self.lastTick = 0
+        self.flip = isFlipped
+        self.images = fireballImgs.copy()
+        for i in range(len(self.images)):
+            self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+            self.images[i] = pygame.transform.flip(self.images[i], not self.flip, False)
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        self.lvl = lvl
+    def draw(self):
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        screen.blit(self.image, self.rect)
+    def update(self):
+        self.pos.x -= 5
+        if pygame.time.get_ticks() - self.lastTick > self.rate:
+            self.lastTick = pygame.time.get_ticks()
+            self.frame += 1 
             if self.frame == len(self.images): self.frame = 0
-            print("hi", self.frame)
         if self.lvl == player.lvl:
             self.draw()
 
@@ -247,6 +279,7 @@ Teleporters = pygame.sprite.Group()
 Obstacles = pygame.sprite.Group()
 Trampolines = pygame.sprite.Group()
 Cannons = pygame.sprite.Group()
+Fireballs = pygame.sprite.Group()
 brown = (100, 65, 25)
 
 def level(lvl):
@@ -307,6 +340,8 @@ def level(lvl):
         Ground(V(100, SCREEN_HEIGHT ), (200, 90), (60, 175, 50), lvl) #1
         Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), (100, 65, 25), lvl) #1
         Cannon(V(500, SCREEN_HEIGHT - 200), 0.3, 100,  lvl)
+               
+        Ground(V(300, SCREEN_HEIGHT - 75), (200, 90), (60, 175, 50), lvl) #1
     else:
         pass
 
@@ -327,7 +362,9 @@ while game_running:
     Teleporters.update()
     Obstacles.update()
     Trampolines.update()
+    Fireballs.update() 
     Cannons.update()
+    
     player.update(deltatime)
     if K[Q]:
         game_running = False
