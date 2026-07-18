@@ -24,7 +24,10 @@ def getImages(path):
     return images
 
 cannonImgs = getImages("cannon")
-fireballImgs = getImages("ball")
+fireballImgs = getImages("ball") 
+playerImg = pygame.image.load("dog (1).png")
+playerImg = pygame.transform.scale_by(playerImg, 0.12)
+# playerImg = pygame.transform.flip(playerImg, True, False)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
@@ -64,18 +67,24 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         self.pos = V(50, SCREEN_HEIGHT-75)
         self.respawnPos = self.pos.copy()
-        self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
+        self.image = playerImg
+        self.rect = self.image.get_rect(center = (self.pos.x, self.pos.y))
         self.vel = V(0,0)
-        self.speed = 400
-        self.jump = 810
+        self.speed = 405
+        self.jump = 820
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 4
+        self.lvl = 2
+        self.isRight = True
     def draw(self):
-        self.rect = pygame.Rect(self.pos.x, self.pos.y, 25, 25)
-        self.rect.center = self.pos
-        pygame.draw.rect(screen, (255,255,255), self.rect)
+        if self.isRight:
+            self.image = pygame.transform.flip(playerImg, True, False)
+        else:
+            self.image = playerImg
+        self.rect = self.image.get_rect(center = (self.pos.x, self.pos.y))
+        # pygame.draw.rect(screen, (255,255,255), self.rect)
+        screen.blit(self.image, self.rect)
     def update(self,dt):
         self.draw()
         self.move(dt)
@@ -107,11 +116,15 @@ class Player(pygame.sprite.Sprite):
         for obstacle in Obstacles:
             if self.rect.colliderect(obstacle.rect):
                 self.respawn()
+        if pygame.sprite.spritecollide(self, Fireballs, True, pygame.sprite.collide_mask):
+            self.respawn()
     def xMovement(self,dt):
         if K[L]:
             self.vel.x = -self.speed
+            self.isRight = False
         elif K[R]:
             self.vel.x = self.speed
+            self.isRight = True
         else:
             if self.vel.x > 0:
                 self.vel.x /= 2
@@ -203,10 +216,9 @@ class Cannon(pygame.sprite.Sprite):
             self.frame += 1 
             if self.frame == len(self.images):
                 self.frame = 0
-                Fireball(V(self.pos.x - 50, self.pos.y), 0.4, 100, self.lvl)
+                Fireball(V(self.pos.x - 50, self.pos.y - 10), 0.36, 100, self.lvl)
         if self.lvl == player.lvl:
             self.draw()
-
 class Fireball(pygame.sprite.Sprite):
     def __init__(self, pos, size, rate, lvl, isFlipped = False):
         super().__init__(Fireballs)
@@ -222,10 +234,12 @@ class Fireball(pygame.sprite.Sprite):
             self.images[i] = pygame.transform.flip(self.images[i], not self.flip, False)
         self.image = self.images[self.frame]
         self.rect = self.image.get_rect(center = self.pos)
+        self.mask = pygame.mask.from_surface(self.image)
         self.lvl = lvl
     def draw(self):
         self.image = self.images[self.frame]
         self.rect = self.image.get_rect(center = self.pos)
+        # pygame.draw.rect(screen, "black", self.rect)
         screen.blit(self.image, self.rect)
     def update(self):
         self.pos.x -= 5
@@ -302,7 +316,7 @@ def level(lvl):
         Ground(V(100, SCREEN_HEIGHT +20), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 100), (300, 100), (60, 175, 50), lvl)#2
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 80), (300, 85), brown, lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -175), (100, 50), 50, (255, 255, 255), 1,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -168), (75, 37), 37, (255, 255, 255), 1,lvl)#fix the rest of the obstacles to aroudn these settings.
         Ground(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT - 200), (200, 100), (60, 175, 50), lvl)#3
         Ground(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT - 180), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 400), (450, 100), (60, 175, 50), lvl)#4
