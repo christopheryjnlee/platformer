@@ -27,6 +27,7 @@ cannonImgs = getImages("cannon")
 fireballImgs = getImages("ball") 
 playerImg = pygame.image.load("dog (1).png")
 playerImg = pygame.transform.scale_by(playerImg, 0.12)
+woodImg = pygame.image.load("wood.png")
 # playerImg = pygame.transform.flip(playerImg, True, False)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
@@ -75,7 +76,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 2
+        self.lvl = 4
         self.isRight = True
     def draw(self):
         if self.isRight:
@@ -176,16 +177,25 @@ class Player(pygame.sprite.Sprite):
         self.vel = V(0,0)
 
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, pos, size, color, lvl):
+    def __init__(self, pos, size, color, lvl, img=None):
         super().__init__(Grounds)
         self.pos = pos
         self.size = size
-        self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
+        if img:
+            self.img = pygame.transform.scale(img, self.size)
+            self.rect = self.img.get_rect(center = self.pos)
+            self.hasImg = True
+        else:
+            self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
+            self.hasImg = False
         self.color = color
         self.lvl = lvl
     def draw(self): 
-        self.rect.center = self.pos
-        pygame.draw.rect(screen, self.color, self.rect)
+        if self.hasImg:
+            screen.blit(self.img, self.rect)
+        else:
+            self.rect.center = self.pos
+            pygame.draw.rect(screen, self.color, self.rect)
     def update(self):
         if self.lvl == player.lvl:
             self.draw()
@@ -321,15 +331,15 @@ def level(lvl):
         Ground(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT - 180), (200, 85), brown, lvl)
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 400), (450, 100), (60, 175, 50), lvl)#4
         Ground(V(SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT - 380), (450, 85), brown, lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -100, SCREEN_HEIGHT -475), (100, 50), 50, (255, 255, 255), 1,lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -475), (100, 50), 50, (255, 255, 255), 1,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -100, SCREEN_HEIGHT -469), (75, 37), 37, (255, 255, 255), 1,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -469), (75, 37), 37, (255, 255, 255), 1,lvl)
         Ground(V(SCREEN_WIDTH // 2 - 720, SCREEN_HEIGHT - 530), (120, 100), (60, 175, 50), lvl)#5
         Ground(V(SCREEN_WIDTH // 2 - 720, SCREEN_HEIGHT - 510), (120, 85), brown, lvl)
-        Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 650), (700, 100), (60, 175, 50), lvl)#6
-        Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 630), (700, 85), brown, lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -725), (50, 50), 50, (255, 255, 255), 1,lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -100, SCREEN_HEIGHT -840), (50, 50), 50, (255, 255, 255), 0,lvl)
-        Obstacle(V(SCREEN_WIDTH // 2 -300, SCREEN_HEIGHT -840), (50, 50), 50, (255, 255, 255), 0,lvl)
+        Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 665), (675, 85), (60, 175, 50), lvl)#6
+        Ground(V(SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT - 645), (675, 70), brown, lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT -726), (75, 37), 37, (255, 255, 255), 1,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -50, SCREEN_HEIGHT -850), (75, 37), 37, (255, 255, 255), 0,lvl)
+        Obstacle(V(SCREEN_WIDTH // 2 -350, SCREEN_HEIGHT -850), (75, 37), 37, (255, 255, 255), 0,lvl)
         Ground(V(SCREEN_WIDTH // 2 - 500, -50), (1500, 100), (60, 175, 50), lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 750, SCREEN_HEIGHT - 550), (200, 100), (80, 50, 35),lvl)
     elif lvl == 3:
@@ -353,9 +363,9 @@ def level(lvl):
     elif lvl == 4:
         Ground(V(100, SCREEN_HEIGHT ), (200, 90), (60, 175, 50), lvl) #1
         Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), (100, 65, 25), lvl) #1
-        Cannon(V(500, SCREEN_HEIGHT - 200), 0.3, 100,  lvl)
-               
-        Ground(V(300, SCREEN_HEIGHT - 75), (200, 90), (60, 175, 50), lvl) #1
+        Ground(V(SCREEN_WIDTH - 20, SCREEN_HEIGHT - 125), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+        Cannon(V(SCREEN_WIDTH - 65, SCREEN_HEIGHT - 200), 0.3, 100,  lvl)
+        Ground(V(700, SCREEN_HEIGHT - 75), (1000, 90), (60, 175, 50), lvl) #1
     else:
         pass
 
