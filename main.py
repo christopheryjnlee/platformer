@@ -76,7 +76,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 3
+        self.lvl = 5
         self.isRight = True
     def draw(self):
         if self.isRight:
@@ -177,10 +177,11 @@ class Player(pygame.sprite.Sprite):
         self.vel = V(0,0)
 
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, pos, size, color, lvl, img=None):
+    def __init__(self, pos, size, color, lvl, img=None, move=False):
         super().__init__(Grounds)
         self.pos = pos
         self.size = size
+        self.move = move
         if img:
             self.img = pygame.transform.scale(img, self.size)
             self.rect = self.img.get_rect(center = self.pos)
@@ -305,6 +306,7 @@ Trampolines = pygame.sprite.Group()
 Cannons = pygame.sprite.Group()
 Fireballs = pygame.sprite.Group()
 brown = (100, 65, 25)
+green = (60, 175, 50)
 
 def level(lvl):
     if lvl == 1:
@@ -364,23 +366,35 @@ def level(lvl):
         Trampoline(V(1500, SCREEN_HEIGHT - 215), (50, 15), (175, 120, 190), 1.7, lvl)
         Teleporter(V(SCREEN_WIDTH // 2 + 550, SCREEN_HEIGHT - 750), (200, 100), (80, 50, 35),lvl)
     elif lvl == 4:
-        Ground(V(100, SCREEN_HEIGHT ), (200, 90), (60, 175, 50), lvl) #1
-        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), (100, 65, 25), lvl) #1
+        Ground(V(100, SCREEN_HEIGHT), (200, 90), green, lvl) #1
+        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), brown, lvl) #1
         Ground(V(SCREEN_WIDTH - 20, SCREEN_HEIGHT - 125), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
         Cannon(V(SCREEN_WIDTH - 65, SCREEN_HEIGHT - 200), 0.3, 110,  lvl)
-        Ground(V(600, SCREEN_HEIGHT - 75), (300, 90), (60, 175, 50), lvl) #1
+        Ground(V(600, SCREEN_HEIGHT - 75), (300, 90), green, lvl) #1
         Ground(V(900, SCREEN_HEIGHT - 90), (350, 120), (60, 175, 50), lvl) #1
+        Ground(V(900, SCREEN_HEIGHT - 76), (350, 92), brown, lvl) #1
         Ground(V(450, SCREEN_HEIGHT - 110), (10, 160), (60, 175, 50), lvl) #1
         Obstacle(V(450, SCREEN_HEIGHT - 195), (10, 10), 10, (60, 175, 50), 1,lvl)
+        Ground(V(590, SCREEN_HEIGHT - 63), (290, 65), brown, lvl) #1
         Trampoline(V(1050, SCREEN_HEIGHT - 150), (50, 15), (175, 120, 190), 1.7, lvl)
         Ground(V(700, SCREEN_HEIGHT - 650), (120, 90), (60, 175, 50), lvl) #1
+        Ground(V(700, SCREEN_HEIGHT - 635), (120, 60), brown, lvl) #1
         Ground(V(1250, SCREEN_HEIGHT - 600), (250, 120), (60, 175, 50), lvl) #1
+        Ground(V(1250, SCREEN_HEIGHT - 585), (250, 90), brown, lvl) #1
         Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
         Cannon(V(120, SCREEN_HEIGHT - 750), 0.3, 170,  lvl, isFlipped=True)
         Ground(V(200, SCREEN_HEIGHT - 525), (200, 50), (50, 80, 200), lvl) #1
         Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 600), (200, 100), (80, 50, 35),lvl)
-    elif:
-        
+    elif lvl == 5:
+        """this level will have mmoving platforms and you have to get to the top to
+        switch the lever while stuff comes from the sky and the boss will explode or 
+        something when the lever is touched"""
+        Ground(V(100, SCREEN_HEIGHT), (200, 90), green, lvl) #1
+        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), brown, lvl) #1
+        Ground(V(900, SCREEN_HEIGHT - 40), (1200, 150), green, lvl) #1
+        Ground(V(900, SCREEN_HEIGHT - 20), (1200, 135), brown, lvl) #1
+        Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+
     else:
         pass
 
