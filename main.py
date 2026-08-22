@@ -25,6 +25,7 @@ def getImages(path):
 
 cannonImgs = getImages("cannon")
 fireballImgs = getImages("ball") 
+cometImgs = getImages("comet")
 playerImg = pygame.image.load("dog (1).png")
 playerImg = pygame.transform.scale_by(playerImg, 0.12)
 woodImg = pygame.image.load("wood.png")
@@ -191,14 +192,21 @@ class Ground(pygame.sprite.Sprite):
             self.hasImg = False
         self.color = color
         self.lvl = lvl
-    def draw(self): 
+    def draw(self):
         if self.hasImg:
+            self.rect = self.img.get_rect(center = self.pos)
             screen.blit(self.img, self.rect)
         else:
             self.rect.center = self.pos
             pygame.draw.rect(screen, self.color, self.rect)
     def update(self):
         if self.lvl == player.lvl:
+            if self.move:
+                self.pos.x += self.move
+                if self.pos.x > SCREEN_WIDTH:
+                    self.pos.x = -self.size[0]
+                elif self.pos.x < -self.size[0]:
+                    self.pos.x = SCREEN_WIDTH
             self.draw()
 
 class Cannon(pygame.sprite.Sprite):
@@ -261,6 +269,37 @@ class Fireball(pygame.sprite.Sprite):
         if self.lvl == player.lvl:
             self.draw()
 
+class Comet(pygame.sprite.Sprite):
+    def __init__(self, pos, size, rate, lvl):
+        super().__init__(Comets)
+        self.pos = pos
+        self.size = size
+        self.rate = rate
+        self.frame = 0
+        self.lastTick = 0
+        self.images = cometImgs.copy()
+        for i in range(len(self.images)):
+            self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+            self.images[i] = pygame.transform.rotate(self.images[i], -90)
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.lvl = lvl
+    def draw(self):
+        self.image = self.images[self.frame]
+        self.rect = self.image.get_rect(center = self.pos)
+        # pygame.draw.rect(screen, "black", self.rect)
+        screen.blit(self.image, self.rect)
+    def update(self):
+        # self.pos.y += 5 
+        if pygame.time.get_ticks() - self.lastTick > self.rate:
+            self.lastTick = pygame.time.get_ticks()
+            self.frame += 1 
+            if self.frame == len(self.images): self.frame = 0
+        if self.lvl == player.lvl:
+            self.draw()
+
+
 class Trampoline(pygame.sprite.Sprite):
     def __init__(self, pos, size, color, bounce, lvl):
         super().__init__(Trampolines)
@@ -305,6 +344,7 @@ Obstacles = pygame.sprite.Group()
 Trampolines = pygame.sprite.Group()
 Cannons = pygame.sprite.Group()
 Fireballs = pygame.sprite.Group()
+Comets = pygame.sprite.Group()
 brown = (100, 65, 25)
 green = (60, 175, 50)
 
@@ -393,8 +433,11 @@ def level(lvl):
         Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), brown, lvl) #1
         Ground(V(900, SCREEN_HEIGHT - 40), (1200, 150), green, lvl) #1
         Ground(V(900, SCREEN_HEIGHT - 20), (1200, 135), brown, lvl) #1
+        Ground(V(900, SCREEN_HEIGHT - 250), (200, 50), green, lvl, move=-7) #1
+        Ground(V(900, SCREEN_HEIGHT - 390), (200, 50), green, lvl, move=10) #1
+        Ground(V(900, SCREEN_HEIGHT - 530), (200, 50), green, lvl, move=-13) #1
+        Comet(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 0.2, 100, lvl)
         Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
-
     else:
         pass
 
@@ -417,6 +460,7 @@ while game_running:
     Trampolines.update()
     Fireballs.update() 
     Cannons.update()
+    Comets.update()
     
     player.update(deltatime)
     if K[Q]:
