@@ -1,4 +1,5 @@
 import pygame, os
+from random import randint as r
 """
 i want to make a platformer
 
@@ -26,6 +27,7 @@ def getImages(path):
 cannonImgs = getImages("cannon")
 fireballImgs = getImages("ball") 
 cometImgs = getImages("comet")
+flameImgs = getImages("fire")
 playerImg = pygame.image.load("dog (1).png")
 playerImg = pygame.transform.scale_by(playerImg, 0.12)
 woodImg = pygame.image.load("wood.png")
@@ -120,6 +122,8 @@ class Player(pygame.sprite.Sprite):
                 self.respawn()
         if pygame.sprite.spritecollide(self, Fireballs, True, pygame.sprite.collide_mask):
             self.respawn()
+        if pygame.sprite.spritecollide(self, Comets, True, pygame.sprite.collide_mask):
+            self.respawn()
     def xMovement(self,dt):
         if K[L]:
             self.vel.x = -self.speed
@@ -176,6 +180,33 @@ class Player(pygame.sprite.Sprite):
     def respawn (self):
         self.pos = self.respawnPos.copy()
         self.vel = V(0,0)
+
+class Effect(pygame.sprite.Sprite):
+    def __init__(self, pos, size, images, speed, lvl, startFrame=0):
+        super().__init__(Effects)
+        self.pos = pos
+        self.size = size
+        self.frame = startFrame
+        self.lastTick = 0
+        self.images = images.copy()
+        for i in range(len(self.images)):
+            self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+        self.img = self.images[self.frame]
+        self.rect = self.img.get_rect(center = self.pos)
+        self.speed = speed
+        self.lvl = lvl
+    def draw(self):
+        self.img = self.images[self.frame]
+        self.rect = self.img.get_rect(center = self.pos)
+        screen.blit(self.img, self.rect)
+    def update(self):
+        if pygame.time.get_ticks() - self.lastTick > self.speed:
+            self.lastTick = pygame.time.get_ticks()
+            self.frame += 1 
+            if self.frame == len(self.images): self.frame = 0
+        if self.lvl == player.lvl:
+            self.draw()
+    
 
 class Ground(pygame.sprite.Sprite):
     def __init__(self, pos, size, color, lvl, img=None, move=False):
@@ -291,11 +322,13 @@ class Comet(pygame.sprite.Sprite):
         # pygame.draw.rect(screen, "black", self.rect)
         screen.blit(self.image, self.rect)
     def update(self):
-        # self.pos.y += 5 
+        self.pos.y += 5 
         if pygame.time.get_ticks() - self.lastTick > self.rate:
             self.lastTick = pygame.time.get_ticks()
             self.frame += 1 
             if self.frame == len(self.images): self.frame = 0
+        if self.pos.y > SCREEN_HEIGHT + 200:
+            self.kill()
         if self.lvl == player.lvl:
             self.draw()
 
@@ -345,6 +378,7 @@ Trampolines = pygame.sprite.Group()
 Cannons = pygame.sprite.Group()
 Fireballs = pygame.sprite.Group()
 Comets = pygame.sprite.Group()
+Effects = pygame.sprite.Group()
 brown = (100, 65, 25)
 green = (60, 175, 50)
 
@@ -433,11 +467,12 @@ def level(lvl):
         Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), brown, lvl) #1
         Ground(V(900, SCREEN_HEIGHT - 40), (1200, 150), green, lvl) #1
         Ground(V(900, SCREEN_HEIGHT - 20), (1200, 135), brown, lvl) #1
-        Ground(V(900, SCREEN_HEIGHT - 250), (200, 50), green, lvl, move=-7) #1
-        Ground(V(900, SCREEN_HEIGHT - 390), (200, 50), green, lvl, move=10) #1
-        Ground(V(900, SCREEN_HEIGHT - 530), (200, 50), green, lvl, move=-13) #1
-        Comet(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 0.2, 100, lvl)
+        Ground(V(900, SCREEN_HEIGHT - 250), (200, 50), green, lvl, move=-5) #1
+        Ground(V(900, SCREEN_HEIGHT - 390), (200, 50), green, lvl, move=7) #1
+        Ground(V(900, SCREEN_HEIGHT - 530), (200, 50), green, lvl, move=-11) #1 
         Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+        for i in range(20):
+            Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42))
     else:
         pass
 
@@ -445,6 +480,8 @@ game_running = True
 
 level(player.lvl)
 player.respawn()
+cometSpawn = 0
+cometSpawnRate = 1000
 
 
 while game_running:
@@ -454,6 +491,9 @@ while game_running:
             game_running = False
     K = pygame.key.get_pressed()
     screen.fill((50, 80, 200))
+    if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate:
+        Comet(V(SCREEN_WIDTH // 2 + r(-450, 700), -150), .25, 100, player.lvl)
+        cometSpawn = pygame.time.get_ticks()
     Grounds.update()
     Teleporters.update()
     Obstacles.update()
@@ -461,8 +501,8 @@ while game_running:
     Fireballs.update() 
     Cannons.update()
     Comets.update()
-    
     player.update(deltatime)
+    Effects.update()
     if K[Q]:
         game_running = False
     pygame.display.update()
