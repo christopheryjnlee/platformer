@@ -31,6 +31,10 @@ flameImgs = getImages("fire")
 playerImg = pygame.image.load("dog (1).png")
 playerImg = pygame.transform.scale_by(playerImg, 0.12)
 woodImg = pygame.image.load("wood.png")
+lavaImg = pygame.image.load("lava.jpg")
+longLavaImg = pygame.image.load("longLava.png")
+vbgImgs = getImages("volcano")
+boss1Imgs = getImages("boss")
 # playerImg = pygame.transform.flip(playerImg, True, False)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
@@ -182,8 +186,12 @@ class Player(pygame.sprite.Sprite):
         self.vel = V(0,0)
 
 class Effect(pygame.sprite.Sprite):
-    def __init__(self, pos, size, images, speed, lvl, startFrame=0):
-        super().__init__(Effects)
+    def __init__(self, pos, size, images, speed, lvl, startFrame=0, isFlipped = False,loop=False, group = None):
+        if group == None:
+            super().__init__(Effects) 
+        else:
+            super().__init__(group)
+            print("hi")
         self.pos = pos
         self.size = size
         self.frame = startFrame
@@ -191,10 +199,14 @@ class Effect(pygame.sprite.Sprite):
         self.images = images.copy()
         for i in range(len(self.images)):
             self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+            if isFlipped:
+                self.images[i] = pygame.transform.flip(self.images[i], True, False)
         self.img = self.images[self.frame]
         self.rect = self.img.get_rect(center = self.pos)
         self.speed = speed
         self.lvl = lvl
+        self.loop = loop
+        self.forward = 1
     def draw(self):
         self.img = self.images[self.frame]
         self.rect = self.img.get_rect(center = self.pos)
@@ -202,8 +214,13 @@ class Effect(pygame.sprite.Sprite):
     def update(self):
         if pygame.time.get_ticks() - self.lastTick > self.speed:
             self.lastTick = pygame.time.get_ticks()
-            self.frame += 1 
-            if self.frame == len(self.images): self.frame = 0
+            self.frame += self.forward
+            if self.loop:
+                if self.frame == len(self.images): 
+                    self.forward = -1
+                    self.frame = len(self.images) - 1
+                elif self.frame == 0: self.forward = 1
+            elif self.frame == len(self.images) and not self.loop: self.frame = 0
         if self.lvl == player.lvl:
             self.draw()
     
@@ -379,8 +396,12 @@ Cannons = pygame.sprite.Group()
 Fireballs = pygame.sprite.Group()
 Comets = pygame.sprite.Group()
 Effects = pygame.sprite.Group()
+Backgrounds = pygame.sprite.Group()
+Boss = pygame.sprite.Group()
 brown = (100, 65, 25)
 green = (60, 175, 50)
+volcano = 61, 51, 45
+obsidian = 19, 21, 48
 
 def level(lvl):
     if lvl == 1:
@@ -463,16 +484,21 @@ def level(lvl):
         """this level will have mmoving platforms and you have to get to the top to
         switch the lever while stuff comes from the sky and the boss will explode or 
         something when the lever is touched"""
-        Ground(V(100, SCREEN_HEIGHT), (200, 90), green, lvl) #1
-        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), brown, lvl) #1
-        Ground(V(900, SCREEN_HEIGHT - 40), (1200, 150), green, lvl) #1
-        Ground(V(900, SCREEN_HEIGHT - 20), (1200, 135), brown, lvl) #1
-        Ground(V(900, SCREEN_HEIGHT - 250), (200, 50), green, lvl, move=-5) #1
-        Ground(V(900, SCREEN_HEIGHT - 390), (200, 50), green, lvl, move=7) #1
-        Ground(V(900, SCREEN_HEIGHT - 530), (200, 50), green, lvl, move=-11) #1 
+        global playerImg
+        playerImg = pygame.transform.scale_by(playerImg, 0.8)
+        player.jump = 600
+        Ground(V(100, SCREEN_HEIGHT), (200, 90), volcano, lvl) #1
+        Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), obsidian, lvl, img = lavaImg) #1
+        Ground(V(900, SCREEN_HEIGHT ), (1200, 150), volcano, lvl) #1
+        Ground(V(900, SCREEN_HEIGHT + 20), (1200, 135), obsidian, lvl, img = longLavaImg) #1
+        Ground(V(900, SCREEN_HEIGHT - 250), (250, 50), volcano, lvl, move=-5) #1
+        Ground(V(900, SCREEN_HEIGHT - 390), (190, 50), volcano, lvl, move=7) #1
+        Ground(V(900, SCREEN_HEIGHT - 530), (250, 50), volcano, lvl, move=-5) #1
         Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+        Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, vbgImgs, 150, lvl, group = Backgrounds)
+        Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 350), 1.35, boss1Imgs, 100, lvl, group = Boss, isFlipped = True)
         for i in range(20):
-            Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42))
+            Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42), 3)
     else:
         pass
 
@@ -481,7 +507,8 @@ game_running = True
 level(player.lvl)
 player.respawn()
 cometSpawn = 0
-cometSpawnRate = 1000
+cometSpawnRate = 500
+layer = 0
 
 
 while game_running:
@@ -494,6 +521,8 @@ while game_running:
     if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate:
         Comet(V(SCREEN_WIDTH // 2 + r(-450, 700), -150), .25, 100, player.lvl)
         cometSpawn = pygame.time.get_ticks()
+    Backgrounds.update()
+    Boss.update()
     Grounds.update()
     Teleporters.update()
     Obstacles.update()
