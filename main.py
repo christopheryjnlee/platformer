@@ -486,15 +486,17 @@ def level(lvl):
         something when the lever is touched"""
         global playerImg
         playerImg = pygame.transform.scale_by(playerImg, 0.8)
-        player.jump = 600
+        player.jump = 650
         Ground(V(100, SCREEN_HEIGHT), (200, 90), volcano, lvl) #1
         Ground(V(100, SCREEN_HEIGHT + 20), (200, 75), obsidian, lvl, img = lavaImg) #1
         Ground(V(900, SCREEN_HEIGHT ), (1200, 150), volcano, lvl) #1
         Ground(V(900, SCREEN_HEIGHT + 20), (1200, 135), obsidian, lvl, img = longLavaImg) #1
-        Ground(V(900, SCREEN_HEIGHT - 250), (250, 50), volcano, lvl, move=-5) #1
-        Ground(V(900, SCREEN_HEIGHT - 390), (190, 50), volcano, lvl, move=7) #1
-        Ground(V(900, SCREEN_HEIGHT - 530), (250, 50), volcano, lvl, move=-5) #1
-        Ground(V(75, SCREEN_HEIGHT - 675), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+        Ground(V(900, SCREEN_HEIGHT - 175), (250, 50), volcano, lvl, move=-5) #1
+        Ground(V(900, SCREEN_HEIGHT - 315), (190, 50), volcano, lvl, move=7) #1
+        Ground(V(900, SCREEN_HEIGHT - 455), (250, 50), volcano, lvl, move=-6) #1
+        Ground(V(900, SCREEN_HEIGHT - 590), (300, 50), volcano, lvl, move= 9) #1
+        Ground(V(75, SCREEN_HEIGHT - 700), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
+
         Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, vbgImgs, 150, lvl, group = Backgrounds)
         Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 350), 1.35, boss1Imgs, 100, lvl, group = Boss, isFlipped = True)
         for i in range(20):
@@ -507,8 +509,11 @@ game_running = True
 level(player.lvl)
 player.respawn()
 cometSpawn = 0
-cometSpawnRate = 500
+cometSpawnRate = 800
 layer = 0
+cometGap = 0
+GAP = 250
+positive = 1
 
 
 while game_running:
@@ -519,7 +524,12 @@ while game_running:
     K = pygame.key.get_pressed()
     screen.fill((50, 80, 200))
     if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate:
-        Comet(V(SCREEN_WIDTH // 2 + r(-450, 700), -150), .25, 100, player.lvl)
+        Comet(V(SCREEN_WIDTH // 2 + (cometGap + -450), -150), .25, 100, player.lvl) # r(-450, 700)
+        if cometGap > 1150:
+            positive = -1
+        if cometGap < GAP:
+            positive = 1
+        cometGap = cometGap + (GAP * positive)
         cometSpawn = pygame.time.get_ticks()
     Backgrounds.update()
     Boss.update()
