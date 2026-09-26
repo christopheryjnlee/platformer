@@ -31,11 +31,13 @@ flameImgs = getImages("fire")
 playerImg = pygame.image.load("dog (1).png")
 playerImg = pygame.transform.scale_by(playerImg, 0.12)
 woodImg = pygame.image.load("wood.png")
+stoneImg = pygame.image.load("stone.png") 
 lavaImg = pygame.image.load("lava.jpg")
 longLavaImg = pygame.image.load("longLava.png")
 vbgImgs = getImages("volcano")
 boss1Imgs = getImages("boss")
-# playerImg = pygame.transform.flip(playerImg, True, False)
+leverImg = pygame.image.load("lever.png")
+rleverImg = pygame.transform.flip(leverImg, True, False)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
@@ -257,6 +259,31 @@ class Ground(pygame.sprite.Sprite):
                     self.pos.x = SCREEN_WIDTH
             self.draw()
 
+class Interactable(pygame.sprite.Sprite):
+    def __init__(self, pos, size, lvl, img, finImg):
+        super().__init__(Interactables)
+        self.pos = pos
+        self.size = size
+        self.hasInteracted = False
+        self.img = pygame.transform.scale_by(img, self.size)
+        self.finImg = pygame.transform.scale_by(finImg, self.size)
+        self.rect = self.img.get_rect(center = self.pos)
+        self.image = self.img
+        self.hasImg = True
+        self.lvl = lvl
+    def draw(self):
+        if self.hasInteracted == False: 
+            self.rect = self.img.get_rect(center = self.pos)
+            screen.blit(self.img, self.rect)
+        else:
+            self.rect = self.finImg.get_rect(center = self.pos)
+            screen.blit(self.finImg, self.rect) 
+    def update(self):
+        if self.lvl == player.lvl:
+            self.draw()
+            if K[I] and pygame.sprite.collide_mask(self, player):
+                self.hasInteracted = True
+
 class Cannon(pygame.sprite.Sprite):
     def __init__(self, pos, size, rate, lvl, isFlipped = False):
         super().__init__(Cannons)
@@ -339,7 +366,7 @@ class Comet(pygame.sprite.Sprite):
         # pygame.draw.rect(screen, "black", self.rect)
         screen.blit(self.image, self.rect)
     def update(self):
-        self.pos.y += 5 
+        self.pos.y += 6 
         if pygame.time.get_ticks() - self.lastTick > self.rate:
             self.lastTick = pygame.time.get_ticks()
             self.frame += 1 
@@ -385,6 +412,7 @@ U = pygame.K_w
 L = pygame.K_a
 R = pygame.K_d
 Q = pygame.K_ESCAPE
+I = pygame.K_f
 V = pygame.Vector2
 player = Player()
 
@@ -398,6 +426,7 @@ Comets = pygame.sprite.Group()
 Effects = pygame.sprite.Group()
 Backgrounds = pygame.sprite.Group()
 Boss = pygame.sprite.Group()
+Interactables = pygame.sprite.Group()
 brown = (100, 65, 25)
 green = (60, 175, 50)
 volcano = 61, 51, 45
@@ -495,10 +524,10 @@ def level(lvl):
         Ground(V(900, SCREEN_HEIGHT - 315), (190, 50), volcano, lvl, move=7) #1
         Ground(V(900, SCREEN_HEIGHT - 455), (250, 50), volcano, lvl, move=-6) #1
         Ground(V(900, SCREEN_HEIGHT - 590), (300, 50), volcano, lvl, move= 9) #1
-        Ground(V(75, SCREEN_HEIGHT - 700), (200, 50), (100, 65, 25), lvl, img=woodImg) #1
-
+        Ground(V(75, SCREEN_HEIGHT - 700), (200, 75), (100, 65, 25), lvl, img=stoneImg) #1
+        Interactable(V(75, SCREEN_HEIGHT - 755), .4, lvl, leverImg,rleverImg) #1
         Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, vbgImgs, 150, lvl, group = Backgrounds)
-        Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 350), 1.35, boss1Imgs, 100, lvl, group = Boss, isFlipped = True)
+        Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 320), 1.4, boss1Imgs, 100, lvl, group = Boss, isFlipped = True)
         for i in range(20):
             Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42), 3)
     else:
@@ -540,9 +569,9 @@ while game_running:
     Fireballs.update() 
     Cannons.update()
     Comets.update()
+    Interactables.update()
     player.update(deltatime)
     Effects.update()
     if K[Q]:
         game_running = False
     pygame.display.update()
-
