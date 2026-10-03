@@ -34,6 +34,7 @@ woodImg = pygame.image.load("wood.png")
 stoneImg = pygame.image.load("stone.png") 
 lavaImg = pygame.image.load("lava.jpg")
 longLavaImg = pygame.image.load("longLava.png")
+explosionImgs = getImages("explosion")
 vbgImgs = getImages("volcano")
 boss1Imgs = getImages("boss")
 leverImg = pygame.image.load("lever.png")
@@ -97,7 +98,7 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
     def update(self,dt):
         self.draw()
-        self.move(dt)
+        if not freeze_everything: self.move(dt)
     def move(self,dt):
         self.xMovement(dt)
         self.collideX()
@@ -188,7 +189,7 @@ class Player(pygame.sprite.Sprite):
         self.vel = V(0,0)
 
 class Effect(pygame.sprite.Sprite):
-    def __init__(self, pos, size, images, speed, lvl, startFrame=0, isFlipped = False,loop=False, group = None):
+    def __init__(self, pos, size, images, speed, lvl, startFrame=0, isFlipped = False, bounce=False, loop = True, group = None, effect = None):
         if group == None:
             super().__init__(Effects) 
         else:
@@ -199,6 +200,7 @@ class Effect(pygame.sprite.Sprite):
         self.frame = startFrame
         self.lastTick = 0
         self.images = images.copy()
+        self.effect = effect
         for i in range(len(self.images)):
             self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
             if isFlipped:
@@ -207,22 +209,35 @@ class Effect(pygame.sprite.Sprite):
         self.rect = self.img.get_rect(center = self.pos)
         self.speed = speed
         self.lvl = lvl
-        self.loop = loop
+        self.bounce = bounce
         self.forward = 1
+        self.loop = loop
     def draw(self):
         self.img = self.images[self.frame]
         self.rect = self.img.get_rect(center = self.pos)
         screen.blit(self.img, self.rect)
     def update(self):
+        global boss1_complete, freeze_everything
+        if boss1_complete and self.effect == "boss 1":
+            self.pos.y += 5
+            if self.pos.y >= SCREEN_HEIGHT + 50:
+                freeze_everything = False
+                Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 100), (200, 100), (80, 50, 35),self.lvl)
+                self.kill()
         if pygame.time.get_ticks() - self.lastTick > self.speed:
             self.lastTick = pygame.time.get_ticks()
-            self.frame += self.forward
-            if self.loop:
+            if not self.loop and self.frame == len(self.images) - 1:
+                if self.effect == "boss 1 explosion":
+                    boss1_complete = True
+                self.kill()
+            else:
+                self.frame += self.forward
+            if self.bounce:
                 if self.frame == len(self.images): 
                     self.forward = -1
                     self.frame = len(self.images) - 1
                 elif self.frame == 0: self.forward = 1
-            elif self.frame == len(self.images) and not self.loop: self.frame = 0
+            elif self.frame == len(self.images) and not self.bounce and self.loop: self.frame = 0
         if self.lvl == player.lvl:
             self.draw()
     
@@ -251,7 +266,7 @@ class Ground(pygame.sprite.Sprite):
             pygame.draw.rect(screen, self.color, self.rect)
     def update(self):
         if self.lvl == player.lvl:
-            if self.move:
+            if self.move and not freeze_everything:
                 self.pos.x += self.move
                 if self.pos.x > SCREEN_WIDTH:
                     self.pos.x = -self.size[0]
@@ -260,7 +275,7 @@ class Ground(pygame.sprite.Sprite):
             self.draw()
 
 class Interactable(pygame.sprite.Sprite):
-    def __init__(self, pos, size, lvl, img, finImg):
+    def __init__(self, pos, size, lvl, img, finImg, action):
         super().__init__(Interactables)
         self.pos = pos
         self.size = size
@@ -271,6 +286,7 @@ class Interactable(pygame.sprite.Sprite):
         self.image = self.img
         self.hasImg = True
         self.lvl = lvl
+        self.action = action
     def draw(self):
         if self.hasInteracted == False: 
             self.rect = self.img.get_rect(center = self.pos)
@@ -281,8 +297,12 @@ class Interactable(pygame.sprite.Sprite):
     def update(self):
         if self.lvl == player.lvl:
             self.draw()
-            if K[I] and pygame.sprite.collide_mask(self, player):
+            if K[I] and pygame.sprite.collide_mask(self, player) and not self.hasInteracted:
                 self.hasInteracted = True
+                global freeze_everything
+                if self.action == "explosion":
+                    freeze_everything = True
+                    Effect(V(SCREEN_WIDTH // 2 , SCREEN_HEIGHT - 320), 2.2, explosionImgs, 85, self.lvl, group = Boss, loop=False, effect="boss 1 explosion")
 
 class Cannon(pygame.sprite.Sprite):
     def __init__(self, pos, size, rate, lvl, isFlipped = False):
@@ -336,11 +356,12 @@ class Fireball(pygame.sprite.Sprite):
         # pygame.draw.rect(screen, "black", self.rect)
         screen.blit(self.image, self.rect)
     def update(self):
-        self.pos.x -= 5 if not self.flip else -5
-        if pygame.time.get_ticks() - self.lastTick > self.rate:
-            self.lastTick = pygame.time.get_ticks()
-            self.frame += 1 
-            if self.frame == len(self.images): self.frame = 0
+        if not freeze_everything:
+            self.pos.x -= 5 if not self.flip else -5
+            if pygame.time.get_ticks() - self.lastTick > self.rate:
+                self.lastTick = pygame.time.get_ticks()
+                self.frame += 1 
+                if self.frame == len(self.images): self.frame = 0
         if self.lvl == player.lvl:
             self.draw()
 
@@ -366,16 +387,18 @@ class Comet(pygame.sprite.Sprite):
         # pygame.draw.rect(screen, "black", self.rect)
         screen.blit(self.image, self.rect)
     def update(self):
-        self.pos.y += 6 
-        if pygame.time.get_ticks() - self.lastTick > self.rate:
-            self.lastTick = pygame.time.get_ticks()
-            self.frame += 1 
-            if self.frame == len(self.images): self.frame = 0
-        if self.pos.y > SCREEN_HEIGHT + 200:
+        if not freeze_everything:
+            self.pos.y += 6 
+            if pygame.time.get_ticks() - self.lastTick > self.rate:
+                self.lastTick = pygame.time.get_ticks()
+                self.frame += 1 
+                if self.frame == len(self.images): self.frame = 0
+            if self.pos.y > SCREEN_HEIGHT + 200:
+                self.kill()
+        if boss1_complete:
             self.kill()
         if self.lvl == player.lvl:
             self.draw()
-
 
 class Trampoline(pygame.sprite.Sprite):
     def __init__(self, pos, size, color, bounce, lvl):
@@ -525,15 +548,19 @@ def level(lvl):
         Ground(V(900, SCREEN_HEIGHT - 455), (250, 50), volcano, lvl, move=-6) #1
         Ground(V(900, SCREEN_HEIGHT - 590), (300, 50), volcano, lvl, move= 9) #1
         Ground(V(75, SCREEN_HEIGHT - 700), (200, 75), (100, 65, 25), lvl, img=stoneImg) #1
-        Interactable(V(75, SCREEN_HEIGHT - 755), .4, lvl, leverImg,rleverImg) #1
+        Interactable(V(75, SCREEN_HEIGHT - 755), .4, lvl, leverImg,rleverImg, "explosion") #1
         Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, vbgImgs, 150, lvl, group = Backgrounds)
-        Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 320), 1.4, boss1Imgs, 100, lvl, group = Boss, isFlipped = True)
+        Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 320), 1.4, boss1Imgs, 100, lvl, group = Boss, isFlipped = True, effect="boss 1")
+        
         for i in range(20):
             Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42), 3)
     else:
         pass
 
 game_running = True
+boss1_complete = False
+freeze_everything = False
+
 
 level(player.lvl)
 player.respawn()
@@ -552,7 +579,7 @@ while game_running:
             game_running = False
     K = pygame.key.get_pressed()
     screen.fill((50, 80, 200))
-    if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate:
+    if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate and not boss1_complete:
         Comet(V(SCREEN_WIDTH // 2 + (cometGap + -450), -150), .25, 100, player.lvl) # r(-450, 700)
         if cometGap > 1150:
             positive = -1
