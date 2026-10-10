@@ -39,6 +39,9 @@ vbgImgs = getImages("volcano")
 boss1Imgs = getImages("boss")
 leverImg = pygame.image.load("lever.png")
 rleverImg = pygame.transform.flip(leverImg, True, False)
+doorImg = pygame.image.load("door.png")
+skyImg = pygame.image.load("sky.png")
+grassImg = pygame.image.load("grass.png")
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
@@ -99,29 +102,34 @@ class Player(pygame.sprite.Sprite):
     def update(self,dt):
         self.draw()
         if not freeze_everything: self.move(dt)
+    def nextLevel(self):
+        self.lvl += 1
+        self.respawn()
+        level(self.lvl)
+        print("next level %s" % self.lvl)
+        for ground in Grounds:
+            if ground.lvl == self.lvl - 1:
+                ground.kill()
+        for obstacle in Obstacles:
+            if obstacle.lvl == self.lvl - 1:
+                obstacle.kill()
+        for tramp in Trampolines:
+            if tramp.lvl == self.lvl - 1:
+                tramp.kill()
+        for tele in Teleporters:
+            if tele.lvl == self.lvl - 1:
+                tele.kill()
     def move(self,dt):
         self.xMovement(dt)
         self.collideX()
         self.yMovement(dt)
         self.collideY(dt)
         for tp in Teleporters:
-            if self.rect.colliderect(tp.rect):
-                self.lvl += 1
-                self.respawn()
-                level(self.lvl)
-                print("next level %s" % self.lvl)
-                for ground in Grounds:
-                    if ground.lvl == self.lvl - 1:
-                        ground.kill()
-                for obstacle in Obstacles:
-                    if obstacle.lvl == self.lvl - 1:
-                        obstacle.kill()
-                for tramp in Trampolines:
-                    if tramp.lvl == self.lvl - 1:
-                        tramp.kill()
-                for tele in Teleporters:
-                    if tele.lvl == self.lvl - 1:
-                        tele.kill()
+            if tp.image:
+                if pygame.sprite.collide_mask(self, tp):
+                    self.nextLevel()
+            elif self.rect.colliderect(tp.rect):
+                self.nextLevel()
         if self.pos.x < 0 or self.pos.x > SCREEN_WIDTH or self.pos.y > SCREEN_HEIGHT:
             self.respawn()
         for obstacle in Obstacles:
@@ -194,18 +202,23 @@ class Effect(pygame.sprite.Sprite):
             super().__init__(Effects) 
         else:
             super().__init__(group)
-            print("hi")
         self.pos = pos
         self.size = size
         self.frame = startFrame
         self.lastTick = 0
-        self.images = images.copy()
         self.effect = effect
-        for i in range(len(self.images)):
-            self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
-            if isFlipped:
-                self.images[i] = pygame.transform.flip(self.images[i], True, False)
-        self.img = self.images[self.frame]
+        self.images = images
+        if type(self.images) == list:
+            self.images = images.copy()
+            
+            for i in range(len(self.images)):
+                self.images[i] = pygame.transform.scale_by(self.images[i], self.size)
+                if isFlipped:
+                    self.images[i] = pygame.transform.flip(self.images[i], True, False)
+            self.img = self.images[self.frame]
+        else:
+            self.images = None
+            self.img = pygame.transform.scale_by(images, self.size)
         self.rect = self.img.get_rect(center = self.pos)
         self.speed = speed
         self.lvl = lvl
@@ -213,7 +226,8 @@ class Effect(pygame.sprite.Sprite):
         self.forward = 1
         self.loop = loop
     def draw(self):
-        self.img = self.images[self.frame]
+        if self.images:
+            self.img = self.images[self.frame]
         self.rect = self.img.get_rect(center = self.pos)
         screen.blit(self.img, self.rect)
     def update(self):
@@ -222,9 +236,9 @@ class Effect(pygame.sprite.Sprite):
             self.pos.y += 5
             if self.pos.y >= SCREEN_HEIGHT + 50:
                 freeze_everything = False
-                Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 100), (200, 100), (80, 50, 35),self.lvl)
+                Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 100), 0.33, (80, 50, 35),self.lvl, doorImg)
                 self.kill()
-        if pygame.time.get_ticks() - self.lastTick > self.speed:
+        if self.images and pygame.time.get_ticks() - self.lastTick > self.speed:
             self.lastTick = pygame.time.get_ticks()
             if not self.loop and self.frame == len(self.images) - 1:
                 if self.effect == "boss 1 explosion":
@@ -417,16 +431,25 @@ class Trampoline(pygame.sprite.Sprite):
             self.draw()
 
 class Teleporter(pygame.sprite.Sprite):
-    def __init__(self, pos, size, color,level):
+    def __init__(self, pos, size, color,level, image = None):
         super().__init__(Teleporters)
         self.pos = pos
         self.size = size
-        self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
+        self.image = image
+        if not image:
+            self.rect = pygame.Rect(self.pos.x, self.pos.y, self.size[0], self.size[1])
+        else:
+            self.image = pygame.transform.scale_by(self.image, self.size)
+            self.rect = self.image.get_rect(center = self.pos)
         self.color = color
         self.lvl = level
     def draw(self): 
-        self.rect.center = self.pos
-        pygame.draw.rect(screen, self.color, self.rect)
+        if not self.image:
+            self.rect.center = self.pos
+            pygame.draw.rect(screen, self.color, self.rect)
+        else:
+            self.rect = self.image.get_rect(center = self.pos)
+            screen.blit(self.image, self.rect)
     def update(self):
         if self.lvl == player.lvl:
             self.draw()
@@ -533,6 +556,11 @@ def level(lvl):
         Ground(V(200, SCREEN_HEIGHT - 525), (200, 50), (50, 80, 200), lvl) #1
         Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 600), (200, 100), (80, 50, 35),lvl)
     elif lvl == 5:
+        Ground(V(100, SCREEN_HEIGHT + 50), (200, 90), green, lvl) #1
+        Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, skyImg, 150, lvl, group = Backgrounds)
+        for i in range(30):
+                Effect(V(i * 80, SCREEN_HEIGHT - 10), .25, grassImg, 100, lvl, r(0, 42), 3)
+    elif lvl == 6:
         """this level will have mmoving platforms and you have to get to the top to
         switch the lever while stuff comes from the sky and the boss will explode or 
         something when the lever is touched"""
@@ -551,7 +579,6 @@ def level(lvl):
         Interactable(V(75, SCREEN_HEIGHT - 755), .4, lvl, leverImg,rleverImg, "explosion") #1
         Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, vbgImgs, 150, lvl, group = Backgrounds)
         Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 320), 1.4, boss1Imgs, 100, lvl, group = Boss, isFlipped = True, effect="boss 1")
-        
         for i in range(20):
             Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42), 3)
     else:
@@ -579,7 +606,7 @@ while game_running:
             game_running = False
     K = pygame.key.get_pressed()
     screen.fill((50, 80, 200))
-    if player.lvl == 5 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate and not boss1_complete:
+    if player.lvl == 6 and pygame.time.get_ticks() - cometSpawn >= cometSpawnRate and not boss1_complete:
         Comet(V(SCREEN_WIDTH // 2 + (cometGap + -450), -150), .25, 100, player.lvl) # r(-450, 700)
         if cometGap > 1150:
             positive = -1
