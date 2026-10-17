@@ -42,7 +42,10 @@ rleverImg = pygame.transform.flip(leverImg, True, False)
 doorImg = pygame.image.load("door.png")
 skyImg = pygame.image.load("sky.png")
 grassImg = pygame.image.load("grass.png")
-
+volcanoImg = pygame.image.load("volcanoimg.png")
+rock1Img = pygame.image.load("rock (1).png")
+rock2Img = pygame.image.load("rock (2).png")
+rock3Img = pygame.image.load("rock (3).png")
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 
 class Obstacle(pygame.sprite.Sprite):
@@ -556,10 +559,28 @@ def level(lvl):
         Ground(V(200, SCREEN_HEIGHT - 525), (200, 50), (50, 80, 200), lvl) #1
         Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 600), (200, 100), (80, 50, 35),lvl)
     elif lvl == 5:
-        Ground(V(100, SCREEN_HEIGHT + 50), (200, 90), green, lvl) #1
-        Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 2.8, skyImg, 150, lvl, group = Backgrounds)
-        for i in range(30):
-                Effect(V(i * 80, SCREEN_HEIGHT - 10), .25, grassImg, 100, lvl, r(0, 42), 3)
+        Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT + 50), (SCREEN_WIDTH + 200, 90), green, lvl) #1
+        Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 1, skyImg, 150, lvl, group = Backgrounds)
+        Effect(V(SCREEN_WIDTH // 2 + 600, SCREEN_HEIGHT - 150), 1.3, volcanoImg, 100, lvl, group = Backgrounds)
+        Effect(V(SCREEN_WIDTH // 2 + 300, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 350, SCREEN_HEIGHT - 10), .5, rock1Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 290, SCREEN_HEIGHT + 15), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 280, SCREEN_HEIGHT + 30), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 250, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 240, SCREEN_HEIGHT + 15), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 230, SCREEN_HEIGHT + 30), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 190, SCREEN_HEIGHT + 15), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 180, SCREEN_HEIGHT + 30), .2, rock3Img, 100, lvl)
+        Effect(V(SCREEN_WIDTH // 2 + 150, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
+        Ground(V(SCREEN_WIDTH - 340, SCREEN_HEIGHT), (40, 40), (60, 175, 50), lvl) #1
+        Ground(V(SCREEN_WIDTH - 150, SCREEN_HEIGHT), (100, 100), (60, 175, 50), lvl) #1
+
+        # Effect(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT + 50), .5, rock3Img, 100, lvl)
+        # Effect(V(SCREEN_WIDTH // 2 + 150, SCREEN_HEIGHT + 50), .7, rock3Img, 100, lvl)
+        # Effect(V(SCREEN_WIDTH // 2 + 50, SCREEN_HEIGHT - 30), .5, rock2Img, 100, lvl)
+        for i in range(12):
+                Effect(V(i * 80, SCREEN_HEIGHT - 10), .25, grassImg, 100, lvl)
     elif lvl == 6:
         """this level will have mmoving platforms and you have to get to the top to
         switch the lever while stuff comes from the sky and the boss will explode or 
