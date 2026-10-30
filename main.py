@@ -559,9 +559,10 @@ def level(lvl):
         Ground(V(200, SCREEN_HEIGHT - 525), (200, 50), (50, 80, 200), lvl) #1
         Teleporter(V(SCREEN_WIDTH // 2 - 700, SCREEN_HEIGHT - 600), (200, 100), (80, 50, 35),lvl)
     elif lvl == 5:
+        player.jump = 300
         Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT + 50), (SCREEN_WIDTH + 200, 90), green, lvl) #1
         Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 1, skyImg, 150, lvl, group = Backgrounds)
-        Effect(V(SCREEN_WIDTH // 2 + 600, SCREEN_HEIGHT - 150), 1.3, volcanoImg, 100, lvl, group = Backgrounds)
+        Effect(V(SCREEN_WIDTH // 2 + 600, SCREEN_HEIGHT - 150), 1.3, volcanoImg, 100, lvl)
         Effect(V(SCREEN_WIDTH // 2 + 300, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
         Effect(V(SCREEN_WIDTH // 2 + 350, SCREEN_HEIGHT - 10), .5, rock1Img, 100, lvl)
         Effect(V(SCREEN_WIDTH // 2 + 290, SCREEN_HEIGHT + 15), .2, rock3Img, 100, lvl)
@@ -573,8 +574,15 @@ def level(lvl):
         Effect(V(SCREEN_WIDTH // 2 + 190, SCREEN_HEIGHT + 15), .2, rock3Img, 100, lvl)
         Effect(V(SCREEN_WIDTH // 2 + 180, SCREEN_HEIGHT + 30), .2, rock3Img, 100, lvl)
         Effect(V(SCREEN_WIDTH // 2 + 150, SCREEN_HEIGHT), .2, rock3Img, 100, lvl)
-        Ground(V(SCREEN_WIDTH - 340, SCREEN_HEIGHT), (40, 40), (60, 175, 50), lvl) #1
-        Ground(V(SCREEN_WIDTH - 150, SCREEN_HEIGHT), (100, 100), (60, 175, 50), lvl) #1
+        for i in range(5):
+            Ground(V(SCREEN_WIDTH - 340 + i *29.5, SCREEN_HEIGHT + 10 + i*5), (50, 50 + i *70), (60, 175, 50), lvl) #1
+        Ground(V(SCREEN_WIDTH - 210, SCREEN_HEIGHT), (25, 350), (60, 175, 50), lvl) #1
+        for i in range(4):
+            Ground(V(SCREEN_WIDTH - 100 + i *30, SCREEN_HEIGHT + i*5), (30, 250 - i *70), (60, 175, 50), lvl) #1
+        Ground(V(SCREEN_WIDTH - 120, SCREEN_HEIGHT), (25, 350), (60, 175, 50), lvl) #1
+        Teleporter(V(SCREEN_WIDTH -175, SCREEN_HEIGHT), (50, 50), (80, 50, 35),lvl)
+        # Ground(V(SCREEN_WIDTH - 300, SCREEN_HEIGHT), (50, 150), (60, 175, 50), lvl)
+        # Ground(V(SCREEN_WIDTH - 280, SCREEN_HEIGHT), (50, 180), (60, 175, 50), lvl)
 
         # Effect(V(SCREEN_WIDTH // 2 + 200, SCREEN_HEIGHT + 50), .5, rock3Img, 100, lvl)
         # Effect(V(SCREEN_WIDTH // 2 + 150, SCREEN_HEIGHT + 50), .7, rock3Img, 100, lvl)
