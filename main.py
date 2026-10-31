@@ -47,6 +47,8 @@ rock1Img = pygame.image.load("rock (1).png")
 rock2Img = pygame.image.load("rock (2).png")
 rock3Img = pygame.image.load("rock (3).png")
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+beachImg = pygame.image.load("beach.png")
+oceanskyImg = pygame.image.load("oceansky.png")
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, pos, size,swidth, color,dir,level):
@@ -92,7 +94,7 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 5
+        self.lvl = 7
         self.isRight = True
     def draw(self):
         if self.isRight:
@@ -122,6 +124,8 @@ class Player(pygame.sprite.Sprite):
         for tele in Teleporters:
             if tele.lvl == self.lvl - 1:
                 tele.kill()
+    def setSpawnpoint(self, pos):
+        self.respawnPos = pos
     def move(self,dt):
         self.xMovement(dt)
         self.collideX()
@@ -221,7 +225,10 @@ class Effect(pygame.sprite.Sprite):
             self.img = self.images[self.frame]
         else:
             self.images = None
-            self.img = pygame.transform.scale_by(images, self.size)
+            if type(self.size) == tuple:
+                self.img = pygame.transform.scale(images, self.size)
+            else:
+                self.img = pygame.transform.scale_by(images, self.size)
         self.rect = self.img.get_rect(center = self.pos)
         self.speed = speed
         self.lvl = lvl
@@ -610,6 +617,14 @@ def level(lvl):
         Effect(V(SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT - 320), 1.4, boss1Imgs, 100, lvl, group = Boss, isFlipped = True, effect="boss 1")
         for i in range(20):
             Effect(V(i * 100, SCREEN_HEIGHT - 8), .75, flameImgs, 100, lvl, r(0, 42), 3)
+    elif lvl == 7:
+        # player.setSpawnpoint(V())
+        Ground(V(570, SCREEN_HEIGHT), (1310, 90), volcano, lvl)
+        Effect(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 1, skyImg, 150, lvl, group = Backgrounds)
+        Effect(V(SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT), (SCREEN_WIDTH + 65, 150), beachImg, 150, lvl)
+        Teleporter(V(SCREEN_WIDTH - 140, SCREEN_HEIGHT + 50), (400, 50), (80, 50, 35),lvl)
+    elif lvl == 8:
+        pass
     else:
         pass
 
