@@ -49,6 +49,7 @@ rock3Img = pygame.image.load("rock (3).png")
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
 beachImg = pygame.image.load("beach.png")
 oceanskyImg = pygame.image.load("oceansky.png")
+underwaterImg = pygame.image.load("underwater.png")
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, pos, size,swidth, color,dir,level):
@@ -94,8 +95,10 @@ class Player(pygame.sprite.Sprite):
         self.onGround = False
         self.jgrace = 0.0
         self.gracetime = 0.08
-        self.lvl = 7
+        self.lvl = 8
+        self.gravity = 30
         self.isRight = True
+        self.underwater = False
     def draw(self):
         if self.isRight:
             self.image = pygame.transform.flip(playerImg, True, False)
@@ -137,7 +140,7 @@ class Player(pygame.sprite.Sprite):
                     self.nextLevel()
             elif self.rect.colliderect(tp.rect):
                 self.nextLevel()
-        if self.pos.x < 0 or self.pos.x > SCREEN_WIDTH or self.pos.y > SCREEN_HEIGHT:
+        if self.pos.x < 0 or self.pos.x > SCREEN_WIDTH or self.pos.y > SCREEN_HEIGHT + 25:
             self.respawn()
         for obstacle in Obstacles:
             if self.rect.colliderect(obstacle.rect):
@@ -193,10 +196,10 @@ class Player(pygame.sprite.Sprite):
                 self.vel.y = 0
                 self.pos.y = self.rect.centery
     def yMovement(self, dt):   
-        if K[U] and (self.onGround or self.jgrace > 0):
+        if K[U] and (self.onGround or self.jgrace > 0 or self.underwater):
             self.onGround = False
             self.vel.y = -self.jump
-        self.vel.y += 30
+        self.vel.y += self.gravity
         self.pos.y += self.vel.y * dt
         self.rect.centery = self.pos.y
     def respawn (self):
@@ -487,6 +490,7 @@ brown = (100, 65, 25)
 green = (60, 175, 50)
 volcano = 61, 51, 45
 obsidian = 19, 21, 48
+oceanFloor = 0, 40, 50
 
 def level(lvl):
     if lvl == 1:
@@ -624,7 +628,12 @@ def level(lvl):
         Effect(V(SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT), (SCREEN_WIDTH + 65, 150), beachImg, 150, lvl)
         Teleporter(V(SCREEN_WIDTH - 140, SCREEN_HEIGHT + 50), (400, 50), (80, 50, 35),lvl)
     elif lvl == 8:
-        pass
+        player.underwater = True
+        player.gravity = 5
+        player.jump = 200
+        player.setSpawnpoint(V(50, SCREEN_HEIGHT // 2))
+        Effect(V(SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT // 2 + 20), .84 , underwaterImg, 150, lvl, group = Backgrounds)
+        Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT + 45), (2010, 40), oceanFloor, lvl)
     else:
         pass
 
