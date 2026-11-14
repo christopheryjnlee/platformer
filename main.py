@@ -50,6 +50,9 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREE
 beachImg = pygame.image.load("beach.png")
 oceanskyImg = pygame.image.load("oceansky.png")
 underwaterImg = pygame.image.load("underwater.png")
+sharkImg = pygame.image.load("shark.png")
+orcaImg = pygame.image.load("orca.png")
+jellyImg = pygame.image.load("jelly.png")
 
 class Obstacle(pygame.sprite.Sprite):
     def __init__(self, pos, size,swidth, color,dir,level):
@@ -85,6 +88,7 @@ class Obstacle(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
+        self.globalX = 0
         self.pos = V(50, SCREEN_HEIGHT-75)
         self.respawnPos = self.pos.copy()
         self.image = playerImg
@@ -199,6 +203,8 @@ class Player(pygame.sprite.Sprite):
         if K[U] and (self.onGround or self.jgrace > 0 or self.underwater):
             self.onGround = False
             self.vel.y = -self.jump
+        if K[D] and self.underwater: 
+            self.vel.y = self.jump
         self.vel.y += self.gravity
         self.pos.y += self.vel.y * dt
         self.rect.centery = self.pos.y
@@ -443,7 +449,50 @@ class Trampoline(pygame.sprite.Sprite):
         if self.lvl == player.lvl:
             self.draw()
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, pos, size, level, image):
+        super().__init__(Enemies)
+        self.pos = pos
+        # self.size = size
+        self.image = pygame.transform.scale_by(image, size)
+        self.rect = self.image.get_rect(center = self.pos)
+        self.lvl = level
+    def draw(self): 
+        self.rect = self.image.get_rect(center = self.pos)
+        screen.blit(self.image, self.rect)
+    def movement(self):
+        return
+    def update(self):
+        if self.lvl == player.lvl:
+            self.movement()
+            self.draw()    
+
+class Shark(Enemy):
+    def __init__(self, startPos, amountToMove, size, speed, level):
+        super().__init__(startPos, size, level, sharkImg)
+        self.startPos = startPos.copy()
+        self.endPos = startPos.copy() + V(amountToMove, 0)
+        self.speed = speed
+        # self.moveDistance = speed / (self.endPos.x - self.startPos.x)
+        self.goingRight = True if self.speed > 0 else False
+    def movement(self):
+        if pygame.math.Vector2.distance_to(self.pos, player.pos) < 100: # chase player
+            pass
+        else:
+            self.pos.x += self.speed
+            if self.goingRight:
+                if pygame.math.Vector2.distance_to(self.pos, self.endPos) < 10:
+                    self.speed = -self.speed
+                    self.goingRight = False
+                    self.image = pygame.transform.flip(self.image, True, False)
+            else:
+                if pygame.math.Vector2.distance_to(self.pos, self.startPos) < 10:
+                    self.speed = -self.speed
+                    self.goingRight = True
+                    self.image = pygame.transform.flip(self.image, True, False)
+
 class Teleporter(pygame.sprite.Sprite):
+
     def __init__(self, pos, size, color,level, image = None):
         super().__init__(Teleporters)
         self.pos = pos
@@ -472,6 +521,7 @@ L = pygame.K_a
 R = pygame.K_d
 Q = pygame.K_ESCAPE
 I = pygame.K_f
+D = pygame.K_s
 V = pygame.Vector2
 player = Player()
 
@@ -486,6 +536,7 @@ Effects = pygame.sprite.Group()
 Backgrounds = pygame.sprite.Group()
 Boss = pygame.sprite.Group()
 Interactables = pygame.sprite.Group()
+Enemies = pygame.sprite.Group()
 brown = (100, 65, 25)
 green = (60, 175, 50)
 volcano = 61, 51, 45
@@ -634,6 +685,7 @@ def level(lvl):
         player.setSpawnpoint(V(50, SCREEN_HEIGHT // 2))
         Effect(V(SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT // 2 + 20), .84 , underwaterImg, 150, lvl, group = Backgrounds)
         Ground(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT + 45), (2010, 40), oceanFloor, lvl)
+        Shark(V(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), 200, .7, 3, lvl)
     else:
         pass
 
@@ -677,6 +729,7 @@ while game_running:
     Cannons.update()
     Comets.update()
     Interactables.update()
+    Enemies.update()
     player.update(deltatime)
     Effects.update()
     if K[Q]:
